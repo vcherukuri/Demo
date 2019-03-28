@@ -2,7 +2,7 @@
     "Name":  "Project1VMOperator",
 
     "IsCustom":  true,
-    "Description":  "Lets you manage everything, in the Project1 Resource Group.",
+    "Description":  "Lets you manage VMs, in the Project1 Resource Group.",
     "Actions":  [
                     "Microsoft.Storage/*/read",
     		    "Microsoft.Network/*/read",
