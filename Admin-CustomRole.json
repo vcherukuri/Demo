@@ -1,0 +1,21 @@
+{
+    "Name":  "Project1Owner",
+
+    "IsCustom":  true,
+    "Description":  "Lets you manage everything, in the Project1 Resource Group.",
+    "Actions":  [
+                    "*"
+                ],
+    "NotActions":  [
+
+                   ],
+    "DataActions":  [
+
+                    ],
+    "NotDataActions":  [
+
+                       ],
+    "AssignableScopes":  [
+                             "/subscriptions/854cade6-f4ae-43be-9173-4d825cbfa407/resourcegroups/Project1"
+                         ]
+}
