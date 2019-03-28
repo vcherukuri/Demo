@@ -1,0 +1,27 @@
+{
+    "Name":  "Project1VMOperator",
+
+    "IsCustom":  true,
+    "Description":  "Lets you manage everything, in the Project1 Resource Group.",
+    "Actions":  [
+                    "Microsoft.Storage/*/read",
+    		            "Microsoft.Network/*/read",
+                    "Microsoft.Compute/*/read",
+                    "Microsoft.Compute/virtualMachines/start/action",
+                    "Microsoft.Compute/virtualMachines/restart/action",
+		                "Microsoft.Compute/virtualMachines/powerOff/action"
+
+                ],
+    "NotActions":  [
+
+                   ],
+    "DataActions":  [
+
+                    ],
+    "NotDataActions":  [
+
+                       ],
+    "AssignableScopes":  [
+                             "/subscriptions/855cade6-f4ae-43be-9173-4d897cbfa407/resourcegroups/Project1"
+                         ]
+}
