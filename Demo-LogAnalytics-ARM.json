@@ -1,0 +1,575 @@
+{  
+   "$schema":"http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+   "contentVersion":"1.0.0.0",
+   "parameters":{  
+	"omsWorkspaceName":{  
+         "type":"string",
+         "metadata":{  
+            "description":"LogAnalytics workspace name"
+         }
+      },
+      
+      "omsWorkspaceRegion":{  
+         "type":"string",
+         "defaultValue":"East US",
+         "metadata":{  
+            "description":"Available regions: 'East US', 'West Central US', 'Canada Central', 'West Europe', 'UK South', 'Southeast Asia', 'Australia Southeast', 'Central India', 'Japan East'. For any Microsoft updates in regions, please refer the link: https://azure.microsoft.com/en-in/regions/services/"
+         }
+      },
+      "serviceTier":{  
+         "type":"string",
+         "defaultValue":"PerNode",
+         "allowedValues":[  
+            "Free",
+            "Standalone",
+            "PerNode"
+         ],
+         "metadata":{  
+            "description":"Service Tier: Free, Standalone, or PerNode"
+         }
+      },
+      "dataRetention":{  
+         "type":"int",
+         "defaultValue":7,
+         "minValue":7,
+         "maxValue":730,
+         "metadata":{  
+            "description":"Number of days of retention. Free plans can only have 7 days, Standalone and OMS plans include 30 days for free"
+         }
+      }
+   },
+   "variables":{  
+      
+      "omsWorkspaceName":"[parameters('omsWorkspaceName')]",
+      "automationAccountName":"[parameters('omsWorkspaceName')]",
+      "computergroupArray":[  
+         {  
+            "name":"Ubuntu 16",
+            "displayName":"linuxUbuntu",
+            "category":"Linux",
+            "functionAlias":"ubuntulinux16",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"Ubuntu\" and OSMajorVersion==16 | distinct Computer"
+         },
+         {  
+            "name":"Ubuntu 15",
+            "displayName":"linuxUbuntu",
+            "category":"Linux",
+            "functionAlias":"ubuntulinux15",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"Ubuntu\" and OSMajorVersion==15 | distinct Computer"
+         },
+         {  
+            "name":"Ubuntu 14",
+            "displayName":"linuxUbuntu",
+            "category":"Linux",
+            "functionAlias":"ubuntulinux14",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"Ubuntu\" and OSMajorVersion==14 | distinct Computer"
+         },
+         {  
+            "name":"Redhat 7",
+            "displayName":"linuxRedhat",
+            "category":"Linux",
+            "functionAlias":"Redhatlinux7",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"Red Hat Enterprise Linux\" and OSMajorVersion==7 | distinct Computer"
+         },
+         {  
+            "name":"Redhat 6",
+            "displayName":"linuxRedhat",
+            "category":"Linux",
+            "functionAlias":"Redhatlinux6",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"Red Hat Enterprise Linux\" and OSMajorVersion==6 | distinct Computer"
+         },
+         {  
+            "name":"Suse 12",
+            "displayName":"linuxsuse",
+            "category":"Linux",
+            "functionAlias":"suselinux12",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"SUSE Linux Enterprise Server\" and OSMajorVersion==12 | distinct Computer"
+         },
+         {  
+            "name":"Suse 11",
+            "displayName":"linuxsuse",
+            "category":"Linux",
+            "functionAlias":"suselinux11",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"SUSE Linux Enterprise Server\" and OSMajorVersion==11 | distinct Computer"
+         },
+         {  
+            "name":"Oraclelinux 7",
+            "displayName":"linuxoracle",
+            "category":"Linux",
+            "functionAlias":"oraclelinux7",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"Oracle Linux Server\" and OSMajorVersion==7 | distinct Computer"
+         },
+         {  
+            "name":"Oraclelinux 6",
+            "displayName":"linuxoracle",
+            "category":"Linux",
+            "functionAlias":"oraclelinux6",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"Oracle Linux Server\" and OSMajorVersion==6 | distinct Computer"
+         },
+         {  
+            "name":"CentOS 7",
+            "displayName":"linuxcentos",
+            "category":"Linux",
+            "functionAlias":"centoslinux7",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"CentOS\" and OSMajorVersion==7 | distinct Computer"
+         },
+         {  
+            "name":"CentOS 6",
+            "displayName":"linuxcentos",
+            "category":"Linux",
+            "functionAlias":"centoslinux6",
+            "query":"Heartbeat | where OSType==\"Linux\" and OSName==\"CentOS\" and OSMajorVersion==6 | distinct Computer"
+         },
+         {  
+            "name":"windows2012",
+            "displayName":"Windows",
+            "category":"Windows",
+            "functionAlias":"Windows2012",
+            "query":"Heartbeat | where OSType==\"Windows\" and OSMajorVersion==6 | distinct Computer"
+         },
+         {  
+            "name":"windows2016",
+            "displayName":"Windows",
+            "category":"Windows",
+            "functionAlias":"Windows2016",
+            "query":"Heartbeat | where OSType==\"Windows\" and OSMajorVersion==10 | distinct Computer"
+         }
+      ]
+   },
+   "resources":[  
+      {  
+         "name":"[variables('automationAccountName')]",
+         "type":"Microsoft.Automation/automationAccounts",
+         "apiVersion":"2015-01-01-preview",
+         "location":"[if(equals(parameters('omsWorkspaceRegion'),'East US'), 'East US 2', parameters('omsWorkspaceRegion'))]",
+         "dependsOn":[  
+
+         ],
+         "tags":{  
+
+         },
+         "properties":{  
+            "sku":{  
+               "name":"Free"
+            }
+         },
+         "resources":[  
+            {  
+               "type":"providers/diagnosticSettings",
+               "name":"Microsoft.Insights/Diagnostics",
+               "dependsOn":[  
+                  "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]",
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "apiVersion":"2017-05-01-preview",
+               "properties":{  
+                  "name":"AutomationAccountDiagnostics",
+                  "workspaceId":"[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]",
+                  "logs":[  
+                     {  
+                        "category":"JobLogs",
+                        "enabled":true,
+                        "retentionPolicy":{  
+                           "days":0,
+                           "enabled":false
+                        }
+                     }
+                  ]
+               }
+            }
+         ]
+      },
+      {  
+         "type":"Microsoft.OperationalInsights/workspaces/linkedServices",
+         "name":"[concat(variables('omsWorkspaceName'), '/' , 'Automation')]",
+         "apiVersion":"2015-11-01-preview",
+         "location":"[parameters('omsWorkspaceRegion')]",
+         "properties":{  
+            "resourceId":"[resourceId('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+         },
+         "dependsOn":[  
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]",
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+         ]
+      },
+      {  
+         "apiVersion":"2017-03-15-preview",
+         "location":"[parameters('omsWorkspaceRegion')]",
+         "name":"[variables('omsWorkspaceName')]",
+         "type":"Microsoft.OperationalInsights/workspaces",
+         "comments":"Log Analytics workspace",
+         "dependsOn":[  
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+         ],
+         "properties":{  
+            "sku":{  
+               "name":"[parameters('serviceTier')]"
+            },
+            "features":{  
+               "legacy":0,
+               "searchVersion":1
+            }
+         },
+         "resources":[  
+            {  
+               "name":"AzureActivityLog",
+               "type":"datasources",
+               "apiVersion":"2015-11-01-preview",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"AzureActivityLog",
+               "properties":{  
+                  "linkedResourceId":"[concat(subscription().id, '/providers/Microsoft.Insights/eventTypes/management')]"
+               }
+            },
+            
+            
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"DiskFreeSpace",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"WindowsPerformanceCounter",
+               "properties":{  
+                  "objectName":"LogicalDisk",
+                  "instanceName":"*",
+                  "intervalSeconds":10,
+                  "counterName":"% Free Space"
+               }
+            },
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"AvailableMemoryMB",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"WindowsPerformanceCounter",
+               "properties":{  
+                  "objectName":"Memory",
+                  "instanceName":"*",
+                  "intervalSeconds":10,
+                  "counterName":"Available MBytes"
+               }
+            },
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"UsedMemoryMB",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"WindowsPerformanceCounter",
+               "properties":{  
+                  "objectName":"Memory",
+                  "instanceName":"*",
+                  "intervalSeconds":10,
+                  "counterName":"% Committed Bytes In Use"
+               }
+            },
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"Paging File",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"WindowsPerformanceCounter",
+               "properties":{  
+                  "objectName":"Paging File",
+                  "instanceName":"*",
+                  "intervalSeconds":10,
+                  "counterName":"% Usage"
+               }
+            },
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"Processor Performance",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"WindowsPerformanceCounter",
+               "properties":{  
+                  "objectName":"Processor Information",
+                  "instanceName":"*",
+                  "intervalSeconds":10,
+                  "counterName":"% Processor Utility"
+               }
+            },
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"SystemLogs",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"WindowsEvent",
+               "properties":{  
+                  "eventLogName":"System",
+                  "eventTypes":[  
+                     {  
+                        "eventType":"Error"
+                     },
+                     {  
+                        "eventType":"Warning"
+                     },
+                     {  
+                        "eventType":"Information"
+                     }
+                  ]
+               }
+            },
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"Linux Disk Space",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"LinuxPerformanceObject",
+               "properties":{  
+                  "performanceCounters":[  
+                     {  
+                        "counterName":"% Used Space"
+                     }
+                  ],
+                  "objectName":"Logical Disk",
+                  "instanceName":"*",
+                  "intervalSeconds":10
+               }
+            },
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"Linux Memory",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"LinuxPerformanceObject",
+               "properties":{  
+                  "performanceCounters":[  
+                     {  
+                        "counterName":"Available MBytes Memory"
+                     },
+                     {  
+                        "counterName":"% Used Memory"
+                     },
+                     {  
+                        "counterName":"% Used Swap Space"
+                     }
+                  ],
+                  "objectName":"Memory",
+                  "instanceName":"*",
+                  "intervalSeconds":10
+               }
+            },
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"Linux Processor Idle Time",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"LinuxPerformanceObject",
+               "properties":{  
+                  "performanceCounters":[  
+                     {  
+                        "counterName":"% Idle Time"
+                     }
+                  ],
+                  "objectName":"Processor",
+                  "instanceName":"*",
+                  "intervalSeconds":10
+               }
+            },
+            {  
+               "apiVersion":"2015-11-01-preview",
+               "type":"datasources",
+               "name":"LinuxPerfCollection",
+               "dependsOn":[  
+                  "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+               ],
+               "kind":"LinuxPerformanceCollection",
+               "properties":{  
+                  "state":"Enabled"
+               }
+            }
+         ]
+      },
+      {  
+         "apiVersion":"2017-03-15-preview",
+         "type":"Microsoft.OperationalInsights/workspaces/savedSearches",
+         "name":"[concat(variables('omsWorkspaceName'), '/', tolower(variables('computergroupArray')[copyIndex()].category), '|', toLower(variables('computergroupArray')[copyIndex()].name))]",
+         "copy":{  
+            "name":"computergroupcopy",
+            "count":"[length(variables('computergroupArray'))]"
+         },
+         "dependsOn":[  
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+         ],
+         "properties":{  
+            "etag":"*",
+            "query":"[variables('computergroupArray')[copyIndex()].query]",
+            "displayName":"[variables('computergroupArray')[copyIndex()].name]",
+            "category":"[variables('computergroupArray')[copyIndex()].category]",
+            "functionAlias":"[variables('computergroupArray')[copyIndex()].functionAlias]",
+            "version":2,
+            "tags":[  
+               {  
+                  "Name":"Group",
+                  "Value":"Computer"
+               }
+            ]
+         }
+      },
+      {  
+         "apiVersion":"2015-11-01-preview",
+         "type":"Microsoft.OperationsManagement/solutions",
+         "name":"[concat('AgentHealthAssessment', '(', variables('omsWorkspaceName'), ')')]",
+         "location":"[parameters('omsWorkspaceRegion')]",
+         "dependsOn":[  
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+         ],
+         "properties":{  
+            "workspaceResourceId":"[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]"
+         },
+         "plan":{  
+            "name":"AgentHealthAssessment",
+            "product":"[concat('OMSGallery/', 'AgentHealthAssessment')]",
+            "promotionCode":"",
+            "publisher":"Microsoft"
+         }
+      },
+      {  
+         "apiVersion":"2015-11-01-preview",
+         "type":"Microsoft.OperationsManagement/solutions",
+         "name":"[concat('AzureActivity', '(', variables('omsWorkspaceName'), ')')]",
+         "location":"[parameters('omsWorkspaceRegion')]",
+         "dependsOn":[  
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+         ],
+         "properties":{  
+            "workspaceResourceId":"[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]"
+         },
+         "plan":{  
+            "name":"AzureActivity",
+            "product":"[concat('OMSGallery/', 'AzureActivity')]",
+            "promotionCode":"",
+            "publisher":"Microsoft"
+         }
+      },
+      {  
+         "apiVersion":"2015-11-01-preview",
+         "type":"Microsoft.OperationsManagement/solutions",
+         "name":"[concat('Updates', '(', variables('omsWorkspaceName'), ')')]",
+         "location":"[parameters('omsWorkspaceRegion')]",
+         "dependsOn":[  
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+         ],
+         "properties":{  
+            "workspaceResourceId":"[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]"
+         },
+         "plan":{  
+            "name":"Updates",
+            "product":"[concat('OMSGallery/', 'Updates')]",
+            "promotionCode":"",
+            "publisher":"Microsoft"
+         }
+      },
+      {  
+         "apiVersion":"2015-11-01-preview",
+         "type":"Microsoft.OperationsManagement/solutions",
+         "name":"[concat('AzureAutomation', '(', variables('omsWorkspaceName'), ')')]",
+         "location":"[parameters('omsWorkspaceRegion')]",
+         "dependsOn":[  
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+         ],
+         "properties":{  
+            "workspaceResourceId":"[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]"
+         },
+         "plan":{  
+            "name":"AzureAutomation",
+            "product":"[concat('OMSGallery/', 'AzureAutomation')]",
+            "promotionCode":"",
+            "publisher":"Microsoft"
+         }
+      },
+      {  
+         "apiVersion":"2015-11-01-preview",
+         "type":"Microsoft.OperationsManagement/solutions",
+         "name":"[concat('ServiceDesk', '(', variables('omsWorkspaceName'), ')')]",
+         "location":"[parameters('omsWorkspaceRegion')]",
+         "dependsOn":[  
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+         ],
+         "properties":{  
+            "workspaceResourceId":"[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]"
+         },
+         "plan":{  
+            "name":"ServiceDesk",
+            "product":"[concat('OMSGallery/', 'ServiceDesk')]",
+            "promotionCode":"",
+            "publisher":"Microsoft"
+         }
+      },
+      {  
+         "apiVersion":"2015-11-01-preview",
+         "type":"Microsoft.OperationsManagement/solutions",
+         "name":"[concat('ChangeTracking', '(', variables('omsWorkspaceName'), ')')]",
+         "location":"[parameters('omsWorkspaceRegion')]",
+         "dependsOn":[  
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+         ],
+         "properties":{  
+            "workspaceResourceId":"[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]"
+         },
+         "plan":{  
+            "name":"ChangeTracking",
+            "product":"[concat('OMSGallery/', 'ChangeTracking')]",
+            "promotionCode":"",
+            "publisher":"Microsoft"
+         }
+      },
+      {  
+         "apiVersion":"2015-11-01-preview",
+         "type":"Microsoft.OperationsManagement/solutions",
+         "name":"[concat('AzureSQLAnalytics', '(', variables('omsWorkspaceName'), ')')]",
+         "location":"[parameters('omsWorkspaceRegion')]",
+         "dependsOn":[  
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+         ],
+         "properties":{  
+            "workspaceResourceId":"[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]"
+         },
+         "plan":{  
+            "name":"AzureSQLAnalytics",
+            "product":"[concat('OMSGallery/', 'AzureSQLAnalytics')]",
+            "promotionCode":"",
+            "publisher":"Microsoft"
+         }
+      }
+   ],
+   "outputs":{  
+      
+      "workspaceName":{  
+         "value":"[variables('omsWorkspaceName')]",
+         "type":"string"
+      },
+      "workspaceId":{  
+         "value":"[reference(resourceId('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName')), '2015-03-20').customerId]",
+         "type":"string"
+      },
+      "sharedKeyOutput":{  
+         "value":"[listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName')), '2015-03-20').primarySharedKey]",
+         "type":"string"
+      },
+      "workspacePortal":{  
+         "value":"[reference(resourceId('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName')), '2015-03-20').portalUrl]",
+         "type":"string"
+      }
+   }
+}
